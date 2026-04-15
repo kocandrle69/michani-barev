@@ -1,1 +1,402 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Míchání Barev</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 
+/* ── Background ── */
+html{min-height:100%;background:#0f0c29}
+body{
+  min-height:100vh;
+  font-family:'DM Sans',system-ui,sans-serif;
+  font-size:16px;
+  color:#1a1a2e;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 0%,   rgba(120,80,255,.45) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 10%,  rgba(0,180,255,.35) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 60% at 50% 100%, rgba(255,80,120,.30) 0%, transparent 60%),
+    radial-gradient(ellipse 90% 80% at 80% 80%,  rgba(80,200,180,.25) 0%, transparent 60%),
+    linear-gradient(150deg, #e8e0ff 0%, #d4f0ff 40%, #ffe8f0 80%, #e0fff8 100%);
+  overflow-x:hidden;
+}
+
+/* animated blobs */
+.blob{position:fixed;border-radius:50%;filter:blur(80px);opacity:.55;pointer-events:none;z-index:0}
+.b1{width:420px;height:420px;background:rgba(120,60,255,.5);top:-100px;left:-120px;animation:drift1 18s ease-in-out infinite}
+.b2{width:360px;height:360px;background:rgba(0,160,255,.45);top:-60px;right:-80px;animation:drift2 22s ease-in-out infinite}
+.b3{width:500px;height:400px;background:rgba(255,60,120,.35);bottom:-120px;left:10%;animation:drift3 26s ease-in-out infinite}
+.b4{width:300px;height:300px;background:rgba(60,220,200,.4);bottom:-80px;right:-60px;animation:drift4 20s ease-in-out infinite}
+@keyframes drift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,30px) scale(1.08)}}
+@keyframes drift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-30px,40px) scale(1.05)}}
+@keyframes drift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,-30px) scale(1.1)}}
+@keyframes drift4{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-40px,-20px) scale(1.06)}}
+
+#app{
+  position:relative;z-index:1;
+  max-width:480px;margin:0 auto;
+  padding:env(safe-area-inset-top,0) 0 5rem;
+}
+
+/* ── Glass mixin ── */
+.glass{
+  background:rgba(255,255,255,.58);
+  backdrop-filter:blur(28px) saturate(180%);
+  -webkit-backdrop-filter:blur(28px) saturate(180%);
+  border:1px solid rgba(255,255,255,.80);
+  box-shadow:0 2px 24px rgba(80,40,180,.10), inset 0 1px 0 rgba(255,255,255,.95);
+}
+.glass-dark{
+  background:rgba(255,255,255,.38);
+  backdrop-filter:blur(20px) saturate(160%);
+  -webkit-backdrop-filter:blur(20px) saturate(160%);
+  border:1px solid rgba(255,255,255,.65);
+  box-shadow:0 1px 16px rgba(80,40,180,.08);
+}
+
+/* ── Header ── */
+.hdr{
+  display:flex;align-items:center;gap:10px;
+  padding:.9rem 1.25rem .8rem;
+  border-radius:0 0 24px 24px;
+  border-top:none;
+  position:sticky;top:0;z-index:20;
+  margin-bottom:12px;
+}
+.hdr-logo{
+  width:34px;height:34px;
+  background:linear-gradient(140deg,#7c3aed,#2563eb);
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;flex-shrink:0;
+  box-shadow:0 2px 10px rgba(120,60,255,.35);
+}
+.hdr-title{font-size:17px;font-weight:600;flex:1;color:#1a1a2e}
+.hdr-lang{
+  font-size:12px;font-weight:500;padding:5px 13px;
+  border-radius:99px;background:rgba(255,255,255,.55);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.75);
+  cursor:pointer;color:#444;font-family:inherit;
+  box-shadow:0 1px 6px rgba(0,0,0,.07);
+}
+
+/* ── Cards ── */
+.card{border-radius:20px;margin:0 1rem 10px;overflow:visible}
+
+/* ── Target section ── */
+.target-card{padding:1rem 1.25rem}
+.sec-lbl{
+  font-size:11px;font-weight:600;letter-spacing:.08em;
+  text-transform:uppercase;margin-bottom:.5rem;
+  color:rgba(80,60,140,.7);
+}
+.target-row{display:flex;align-items:baseline;gap:10px}
+.tinput{
+  font-size:46px;font-weight:300;color:#1a1a2e;
+  border:none;background:none;outline:none;
+  width:200px;font-family:'DM Sans',sans-serif;
+  -moz-appearance:textfield;
+  letter-spacing:-1px;
+}
+.tinput::-webkit-inner-spin-button,.tinput::-webkit-outer-spin-button{display:none}
+.unit-grp{display:flex;gap:5px;margin-left:auto;align-items:center}
+.ubtn{
+  padding:7px 16px;border-radius:99px;font-size:14px;font-weight:500;
+  cursor:pointer;border:1px solid rgba(255,255,255,.6);
+  background:rgba(255,255,255,.3);color:rgba(40,30,80,.55);
+  font-family:inherit;transition:all .15s;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+.ubtn.on{
+  background:rgba(100,60,240,.18);
+  border-color:rgba(100,60,240,.45);
+  color:#5b21b6;
+  box-shadow:0 1px 8px rgba(100,60,240,.2);
+}
+
+/* ── Composition ── */
+.comp-card{padding:0;overflow:hidden;border-radius:20px}
+.comp-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.7rem 1.25rem .5rem;
+}
+.comp-total-lbl{font-size:12px;color:rgba(80,60,140,.6)}
+
+.row-wrap{
+  display:flex;align-items:stretch;
+  border-bottom:1px solid rgba(255,255,255,.5);
+  transition:background .1s;
+}
+.row-wrap:last-of-type{border-bottom:none}
+.row-num{
+  width:28px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:rgba(80,60,140,.45);padding-left:4px;
+}
+.row-inputs{flex:1;display:flex;align-items:center;min-width:0}
+.inp-code{
+  flex:1;min-width:0;
+  font-family:'DM Mono',monospace;font-size:13px;
+  color:rgba(40,30,80,.6);border:none;background:none;outline:none;
+  padding:13px 6px 13px 0;
+}
+.inp-code::placeholder{color:rgba(80,60,140,.3)}
+.inp-parts{
+  width:60px;font-size:17px;font-weight:500;
+  border:none;background:none;outline:none;
+  text-align:right;padding:13px 6px;
+  font-family:'DM Sans',sans-serif;-moz-appearance:textfield;
+  color:#1a1a2e;
+}
+.inp-parts::-webkit-inner-spin-button,.inp-parts::-webkit-outer-spin-button{display:none}
+.inp-parts::placeholder{color:rgba(80,60,140,.3)}
+.row-arrow{font-size:11px;color:rgba(80,60,140,.35);padding:0 5px;flex-shrink:0}
+.row-result{
+  width:80px;font-size:24px;font-weight:300;
+  text-align:right;padding:13px 4px;flex-shrink:0;
+  color:#1a1a2e;letter-spacing:-.5px;
+}
+.row-unit{width:28px;font-size:12px;color:rgba(80,60,140,.55);padding:13px 8px 13px 2px;flex-shrink:0}
+.del-btn{
+  width:36px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  border:none;background:none;cursor:pointer;
+  color:rgba(80,60,140,.3);font-size:18px;align-self:stretch;
+}
+.del-btn:active{color:rgba(220,38,38,.7)}
+
+/* total */
+.total-row{
+  display:flex;align-items:baseline;justify-content:space-between;
+  padding:.85rem 1.25rem;
+  border-top:1px solid rgba(255,255,255,.6);
+  background:rgba(255,255,255,.15);
+}
+.total-lbl{font-size:13px;font-weight:500;color:rgba(60,40,120,.6)}
+.total-val{font-size:26px;font-weight:300;color:#1a1a2e;letter-spacing:-.5px}
+
+/* ── Buttons ── */
+.btn-row{display:flex;gap:8px;padding:0 1rem 0}
+.btn-add{
+  flex:1;padding:12px;border-radius:14px;font-size:14px;font-weight:500;
+  border:1.5px dashed rgba(100,60,240,.3);
+  background:rgba(255,255,255,.35);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  cursor:pointer;color:rgba(80,40,180,.7);font-family:inherit;
+}
+.btn-add:active{background:rgba(100,60,240,.15)}
+.btn-sm{
+  padding:12px 16px;border-radius:14px;font-size:14px;font-weight:500;
+  border:1px solid rgba(255,255,255,.7);
+  background:rgba(255,255,255,.45);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  cursor:pointer;color:rgba(60,40,120,.65);font-family:inherit;
+  box-shadow:0 1px 6px rgba(80,40,180,.07);
+}
+.btn-sm:active{background:rgba(255,255,255,.25)}
+
+/* hint */
+.hint{
+  font-size:12px;color:rgba(80,60,140,.55);
+  padding:.5rem 1.25rem .2rem 1.25rem;
+  line-height:1.6;
+}
+
+/* toast */
+.toast{
+  position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);
+  background:rgba(30,20,60,.85);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,.2);
+  color:#fff;padding:10px 22px;border-radius:99px;
+  font-size:13px;font-weight:500;
+  opacity:0;transition:opacity .2s;pointer-events:none;z-index:99;white-space:nowrap;
+}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="blob b1"></div>
+<div class="blob b2"></div>
+<div class="blob b3"></div>
+<div class="blob b4"></div>
+
+<div id="app">
+  <div class="hdr glass">
+    <div class="hdr-logo">🎨</div>
+    <span class="hdr-title" id="hdr-title">Míchání Barev</span>
+    <button class="hdr-lang" id="lang-btn" onclick="toggleLang()">EN</button>
+  </div>
+
+  <div class="card glass target-card">
+    <div class="sec-lbl" id="lbl-target">Cílová váha</div>
+    <div class="target-row">
+      <input class="tinput" id="target" type="number" value="150" min="0" step="1" inputmode="decimal" oninput="calc()">
+      <div class="unit-grp">
+        <button class="ubtn on" id="u-g" onclick="setUnit('g')">g</button>
+        <button class="ubtn"    id="u-kg" onclick="setUnit('kg')">kg</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card glass comp-card">
+    <div class="comp-hdr">
+      <span class="sec-lbl" id="lbl-comp" style="margin:0">Složení</span>
+      <span class="comp-total-lbl" id="total-parts-lbl"></span>
+    </div>
+    <div id="rows"></div>
+    <div class="total-row">
+      <span class="total-lbl" id="lbl-total">Celkem</span>
+      <span class="total-val" id="total-val">—</span>
+    </div>
+  </div>
+
+  <div class="btn-row" style="margin-bottom:8px">
+    <button class="btn-add" id="btn-add" onclick="addRow()">+ Přidat složku</button>
+    <button class="btn-sm"  id="btn-copy" onclick="copyResult()">Kopírovat</button>
+    <button class="btn-sm"  id="btn-clear" onclick="clearAll()">Smazat</button>
+  </div>
+  <div class="hint" id="hint">Zadej díly ze sloupce receptury odpovídající aktuální verzi.</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var LANG=localStorage.getItem('mb-lang')||'cs';
+var TX={
+  cs:{title:'Míchání Barev',target:'Cílová váha',comp:'Složení',total:'Celkem',
+    add:'+ Přidat složku',copy:'Kopírovat',clear:'Smazat',
+    codePh:'kód složky',partsPh:'díly',parts:'dílů celkem',
+    copied:'Zkopírováno!',confirmClear:'Smazat všechny složky?',
+    hint:'Zadej díly ze sloupce receptury odpovídající aktuální verzi.'},
+  en:{title:'Colour Mixing',target:'Target weight',comp:'Composition',total:'Total',
+    add:'+ Add component',copy:'Copy',clear:'Clear',
+    codePh:'component code',partsPh:'parts',parts:'total parts',
+    copied:'Copied!',confirmClear:'Clear all components?',
+    hint:'Enter the parts from the column matching the current version.'}
+};
+function T(k){return TX[LANG][k]||k;}
+function applyLang(){
+  document.getElementById('hdr-title').textContent =T('title');
+  document.getElementById('lbl-target').textContent=T('target');
+  document.getElementById('lbl-comp').textContent  =T('comp');
+  document.getElementById('lbl-total').textContent =T('total');
+  document.getElementById('btn-add').textContent   =T('add');
+  document.getElementById('btn-copy').textContent  =T('copy');
+  document.getElementById('btn-clear').textContent =T('clear');
+  document.getElementById('hint').textContent      =T('hint');
+  document.getElementById('lang-btn').textContent  =LANG==='cs'?'EN':'CS';
+  document.documentElement.lang=LANG;
+  document.querySelectorAll('.inp-code').forEach(function(el){el.placeholder=T('codePh');});
+  document.querySelectorAll('.inp-parts').forEach(function(el){el.placeholder=T('partsPh');});
+}
+function toggleLang(){LANG=LANG==='cs'?'en':'cs';localStorage.setItem('mb-lang',LANG);applyLang();calc();}
+
+var unit='g',rowId=0;
+function setUnit(u){
+  unit=u;
+  document.getElementById('u-g').classList.toggle('on',u==='g');
+  document.getElementById('u-kg').classList.toggle('on',u==='kg');
+  calc();
+}
+
+function addRow(code,parts){
+  rowId++;var id=rowId;
+  var idx=document.querySelectorAll('.row-wrap').length+1;
+  var el=document.createElement('div');
+  el.className='row-wrap';el.id='rw-'+id;
+  el.innerHTML=
+    '<span class="row-num">'+idx+'</span>'
+    +'<div class="row-inputs">'
+    +'<input class="inp-code" type="text" placeholder="'+T('codePh')+'" value="'+(code||'')+'" oninput="calc()" autocomplete="off" autocorrect="off" spellcheck="false">'
+    +'<input class="inp-parts" type="number" inputmode="decimal" placeholder="'+T('partsPh')+'" value="'+(parts!=null?parts:'')+'" min="0" step="0.001" oninput="calc()" onkeydown="tabNext(event,'+id+')">'
+    +'</div>'
+    +'<span class="row-arrow">→</span>'
+    +'<span class="row-result" id="res-'+id+'">—</span>'
+    +'<span class="row-unit" id="ru-'+id+'">'+unit+'</span>'
+    +'<button class="del-btn" onclick="delRow('+id+')" tabindex="-1">×</button>';
+  document.getElementById('rows').appendChild(el);
+  calc();return el;
+}
+function delRow(id){var el=document.getElementById('rw-'+id);if(el)el.remove();renumber();calc();}
+function renumber(){document.querySelectorAll('.row-wrap').forEach(function(r,i){var s=r.querySelector('.row-num');if(s)s.textContent=i+1;});}
+function clearAll(){
+  if(document.querySelectorAll('.row-wrap').length>0&&!confirm(T('confirmClear')))return;
+  document.getElementById('rows').innerHTML='';rowId=0;
+  addRow();addRow();addRow();addRow();
+  setTimeout(function(){var f=document.querySelector('.inp-parts');if(f)f.focus();},50);
+}
+function tabNext(e,id){
+  if(e.key==='Enter'){
+    e.preventDefault();
+    var rows=document.querySelectorAll('.row-wrap');
+    var cur=document.getElementById('rw-'+id);
+    if(cur===rows[rows.length-1]){
+      var n=addRow();setTimeout(function(){var f=n.querySelector('.inp-parts');if(f)f.focus();},30);
+    } else {
+      var idx=Array.from(rows).indexOf(cur);
+      var nxt=rows[idx+1].querySelector('.inp-parts');if(nxt)nxt.focus();
+    }
+  }
+}
+
+function calc(){
+  var target=parseFloat(document.getElementById('target').value)||0;
+  var rows=document.querySelectorAll('.row-wrap');
+  var totalP=0;
+  rows.forEach(function(r){totalP+=parseFloat(r.querySelector('.inp-parts').value)||0;});
+  var mult=totalP>0?target/totalP:0;
+  document.getElementById('total-parts-lbl').textContent=totalP>0?fmt(totalP)+' '+T('parts'):'';
+  rows.forEach(function(r){
+    var id=r.id.replace('rw-','');
+    var p=parseFloat(r.querySelector('.inp-parts').value)||0;
+    var res=document.getElementById('res-'+id);
+    var ru=document.getElementById('ru-'+id);
+    if(res)res.textContent=(mult>0&&p>0)?fmt(p*mult):(p>0&&target>0?'?':'—');
+    if(ru)ru.textContent=unit;
+  });
+  document.getElementById('total-val').textContent=(mult>0&&totalP>0)?fmt(target)+' '+unit:'—';
+}
+
+function fmt(n){
+  if(!n||n===0)return '0';
+  if(n<0.1)return n.toFixed(3).replace(/\.?0+$/,'');
+  if(n<10) return n.toFixed(2).replace(/\.?0+$/,'');
+  if(n<100)return n.toFixed(1).replace(/\.?0+$/,'');
+  return Math.round(n).toString();
+}
+
+function copyResult(){
+  var target=parseFloat(document.getElementById('target').value)||0;
+  var rows=document.querySelectorAll('.row-wrap');
+  var totalP=0;
+  rows.forEach(function(r){totalP+=parseFloat(r.querySelector('.inp-parts').value)||0;});
+  var mult=totalP>0?target/totalP:0;
+  var lines=[];
+  rows.forEach(function(r){
+    var code=r.querySelector('.inp-code').value.trim();
+    var p=parseFloat(r.querySelector('.inp-parts').value)||0;
+    if(p>0)lines.push((code?code+'\t':'')+fmt(p*mult)+' '+unit);
+  });
+  if(!lines.length)return;
+  lines.push('');lines.push(T('total')+': '+fmt(target)+' '+unit);
+  navigator.clipboard&&navigator.clipboard.writeText(lines.join('\n')).then(function(){toast(T('copied'));});
+}
+
+var _tt;
+function toast(msg){
+  var el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(_tt);_tt=setTimeout(function(){el.classList.remove('show');},2000);
+}
+
+applyLang();
+addRow();addRow();addRow();addRow();
+setTimeout(function(){var f=document.querySelector('.inp-parts');if(f)f.focus();},120);
+</script>
+</body>
+</html>
