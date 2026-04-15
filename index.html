@@ -313,7 +313,7 @@ function addRow(code,parts){
     '<span class="row-num">'+idx+'</span>'
     +'<div class="row-inputs">'
     +'<input class="inp-code" type="text" placeholder="'+T('codePh')+'" value="'+(code||'')+'" oninput="calc()" autocomplete="off" autocorrect="off" spellcheck="false">'
-    +'<input class="inp-parts" type="number" inputmode="decimal" placeholder="'+T('partsPh')+'" value="'+(parts!=null?parts:'')+'" min="0" step="0.001" oninput="calc()" onkeydown="tabNext(event,'+id+')">'
+    +'<input class="inp-parts" type="text" inputmode="decimal" placeholder="'+T('partsPh')+'" value="'+(parts!=null?parts:'')+'" oninput="normParts(this)" onkeydown="tabNext(event,'+id+')">'
     +'</div>'
     +'<span class="row-arrow">→</span>'
     +'<span class="row-result" id="res-'+id+'">—</span>'
@@ -344,16 +344,26 @@ function tabNext(e,id){
   }
 }
 
+function normParts(el){
+  var pos=el.selectionStart;
+  var v=el.value.replace(/,/g,'.');
+  v=v.replace(/[^0-9.]/g,'');
+  var pts=v.split('.');if(pts.length>2)v=pts[0]+'.'+pts.slice(1).join('');
+  if(el.value!==v){el.value=v;try{el.setSelectionRange(pos,pos);}catch(e){}}
+  calc();
+}
+function pv(el){return parseFloat((el.value||'').replace(',','.'))||0;}
+
 function calc(){
   var target=parseFloat(document.getElementById('target').value)||0;
   var rows=document.querySelectorAll('.row-wrap');
   var totalP=0;
-  rows.forEach(function(r){totalP+=parseFloat(r.querySelector('.inp-parts').value)||0;});
+  rows.forEach(function(r){totalP+=pv(r.querySelector('.inp-parts'));});
   var mult=totalP>0?target/totalP:0;
   document.getElementById('total-parts-lbl').textContent=totalP>0?fmt(totalP)+' '+T('parts'):'';
   rows.forEach(function(r){
     var id=r.id.replace('rw-','');
-    var p=parseFloat(r.querySelector('.inp-parts').value)||0;
+    var p=pv(r.querySelector('.inp-parts'));
     var res=document.getElementById('res-'+id);
     var ru=document.getElementById('ru-'+id);
     if(res)res.textContent=(mult>0&&p>0)?fmt(p*mult):(p>0&&target>0?'?':'—');
@@ -379,7 +389,7 @@ function copyResult(){
   var lines=[];
   rows.forEach(function(r){
     var code=r.querySelector('.inp-code').value.trim();
-    var p=parseFloat(r.querySelector('.inp-parts').value)||0;
+    var p=pv(r.querySelector('.inp-parts'));
     if(p>0)lines.push((code?code+'\t':'')+fmt(p*mult)+' '+unit);
   });
   if(!lines.length)return;
